@@ -22,8 +22,6 @@ Supported configuration options:
 from oslo.config import cfg
 from stevedore import driver
 
-from openstack.common.cache import backends
-
 _cache_options = [
     cfg.StrOpt('cache_backend',
                default='memory',
@@ -41,7 +39,7 @@ def get_cache(conf):
     cache_backend = conf.cache_backend
     kwargs = dict(cache_prefix=conf.cache_prefix)
 
-    mgr = driver.DriverManager(backends.NAMESPACE,
+    mgr = driver.DriverManager('openstack.common.cache.backends',
                                cache_backend,
                                invoke_on_load=True,
                                invoke_args=[conf],

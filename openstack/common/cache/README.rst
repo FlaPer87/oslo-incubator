@@ -13,8 +13,8 @@ METHODS
 Existing methods are documented and mostly self-explained. Although, there are a couple of other methods "missing".
 
 Should this methods exist?
-- incr
-- decr
+- incr (add operations on integers)
+- append (add operations on objects)
 
 
 What other methods could be useful?

@@ -15,11 +15,11 @@
 from oslo.config import cfg
 
 from openstack.common.cache import cache
-from openstack.common.cache.backends import memory
-from tests import utils as test_utils
+from openstack.common.cache._backends import memory
+from tests import utils
 
 
-class TestCacheModule(test_utils.BaseTestCase):
+class TestCacheModule(utils.BaseTestCase):
 
     def test_get_cache(self):
         driver = cache.get_cache(cfg.CONF)

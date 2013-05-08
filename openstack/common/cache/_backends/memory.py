@@ -12,16 +12,32 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+
 from openstack.common.cache.backends import base
+from openstack.common import timeutils
 
 
 class MemoryBackend(base.Cache):
 
-    def add(self, key, value, ttl=0):
+    def __init__(self, conf, cache_prefix):
+        super(MemoryBackend, self).__init__(conf, cache_prefix)
+        self.cache = {}
+
+    def set(self, key, value, ttl=0):
+        timeout = 0
+        if ttl != 0:
+            timeout = timeutils.utcnow_ts() + ttl
+        self.cache[key] = (timeout, value)
         return True
 
     def get(self, key, default=None):
-        return True
+        now = timeutils.utcnow_ts()
+        for k in self.cache.keys():
+            (timeout, _value) = self.cache[k]
+            if timeout and now >= timeout:
+                del self.cache[k]
 
-    def remove(self, key):
-        return True
+        return self.cache.get(key, (0, None))[1]
+
+    def unset(self, key):
+        self.cache.pop(key, None)

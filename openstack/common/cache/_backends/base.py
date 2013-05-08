@@ -24,8 +24,8 @@ class Cache(object):
         self.cache_prefix = cache_prefix
 
     @abc.abstractmethod
-    def add(self, key, value, ttl=0):
-        """Adds a key to the cache
+    def set(self, key, value, ttl=0):
+        """Sets a key to the cache
 
         :params key: Key to create as string.
         :params value: Value to assign to the key. This
@@ -48,7 +48,7 @@ class Cache(object):
         return None
 
     @abc.abstractmethod
-    def remove(self, key):
+    def unset(self, key):
         """Removes key from cache.
 
         :params key: The key to remove.
@@ -56,6 +56,19 @@ class Cache(object):
         :returns: The key value if there's one
         """
         return None
+
+    def add(self, key, value, ttl=0, min_compress_len=0):
+        """Sets the value for a key if it doesn't exist
+
+        :params key: Key to create as string.
+        :params value: Value to assign to the key. This
+                       can be anything that is handled
+                       by current back-end.
+        :params ttl: Key's timeout in seconds.
+        """
+        if self.get(key) is not None:
+            return False
+        return self.set(key, value, ttl)
 
     def get_many(self, keys, default=None):
         """Gets key's value from cache
@@ -90,3 +103,34 @@ class Cache(object):
         """
         for key, value in data.items():
             self.set(key, value, ttl=ttl)
+
+    def incr(self, key, delta=1):
+        """Increments the value for a key
+
+        :params key: The key to add the value to.
+        :params delta: Units to increment. Use negative
+                       numbers to decrement `key`
+
+        :returns: The new value
+        """
+        value = self.get(key)
+        if value is None:
+            return None
+        new_value = value + delta
+        self.set(key, new_value)
+        return new_value
+
+    def append(self, key, tail):
+        """Appends `value` to `key`'s value.
+
+        :params key: The key to append value to.
+        :params tail: The value to append to `key`
+
+        :returns: The new value
+        """
+        value = self.get(key)
+        if value is None:
+            return None
+        new_value = value + tail
+        self.set(key, new_value)
+        return new_value
