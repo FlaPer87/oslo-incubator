@@ -67,6 +67,51 @@ qpid_opts = [
 
 cfg.CONF.register_opts(qpid_opts)
 
+class QPIDListener(base.Listener):
+
+    def __init__(self, driver, target):
+        super(QPIDListener, self).__init__(driver, target)
+
+        addr_opts = {
+            "create": "always",
+            "node": {
+                "type": "topic",
+                "x-declare": {
+                    "durable": True,
+                    "auto-delete": True,
+                },
+            },
+            "link": {
+                "name": link_name,
+                "durable": True,
+                "x-declare": {
+                    "durable": False,
+                    "auto-delete": True,
+                    "exclusive": False,
+                },
+            },
+        }
+        addr_opts["node"]["x-declare"].update(node_opts)
+        addr_opts["link"]["x-declare"].update(link_opts)
+
+        self.address = "%s ; %s" % (node_name, jsonutils.dumps(addr_opts))
+
+    @property
+    def receiver(self):
+        return self.driver.session.receiver(self.address, capacity=1)
+
+    def poll(self):
+        return self.receiver.fetch()
+
+    def get_receiver(self):
+        return self.receiver
+
+    def done(self, message):
+        self.driver.session.acknowledge(message)
+
+    def reply(self, reply=None, failure=None):
+        pass
+
 
 class QPIDDriver(base.BaseDriver):
 
@@ -108,6 +153,7 @@ class QPIDDriver(base.BaseDriver):
             try:
                 self._create_connection(broker)
                 self.connection.open()
+                self.session = self.connection.session()
             except qpid_exceptions.ConnectionError as e:
                 msg_dict = dict(e=e, delay=delay)
                 msg = _("Unable to connect to AMQP server: %(e)s. "
@@ -119,19 +165,19 @@ class QPIDDriver(base.BaseDriver):
                 LOG.info(_('Connected to AMQP server on %s'), broker)
                 break
 
+
     @property
     def session(self):
         try:
             if not self.connection.opened():
                 self._reconnect()
-            return self.connection.session()
+            return self.session
         except AttributeError:
             self._reconnect()
 
-        return self.connection.session()
+        return self.session
 
     def _send(self, target, message, wait_for_reply=None, timeout=None):
-        session = self.session
 
     def _listen(self, target):
-        pass
+        return self.QPIDListener(self, target)
