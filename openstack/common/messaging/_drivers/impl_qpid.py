@@ -14,6 +14,7 @@
 
 """ Qpid Implementation."""
 
+import json
 import functools
 import itertools
 import time
@@ -67,6 +68,7 @@ qpid_opts = [
 
 cfg.CONF.register_opts(qpid_opts)
 
+
 class QPIDListener(base.Listener):
 
     def __init__(self, driver, target):
@@ -82,7 +84,7 @@ class QPIDListener(base.Listener):
                 },
             },
             "link": {
-                "name": link_name,
+                "name": self.target.topic,
                 "durable": True,
                 "x-declare": {
                     "durable": False,
@@ -91,10 +93,19 @@ class QPIDListener(base.Listener):
                 },
             },
         }
-        addr_opts["node"]["x-declare"].update(node_opts)
-        addr_opts["link"]["x-declare"].update(link_opts)
 
-        self.address = "%s ; %s" % (node_name, jsonutils.dumps(addr_opts))
+        name = "%s / %s" % (self.target.exchange, self.target.topic)
+
+        if target.fanout:
+            name = "%s_fanout" % target.topic
+            addr_opts["link"]["name"] = ("%s_fanout_%s" %
+                                         (target.topic, uuid.uuid4().hex))
+            addr_opts["link"]["x-declare"]["exclusive"] = True
+
+            addr_opts["node"]["x-declare"]["durable"] = False
+            addr_opts["node"]["x-declare"]["type"] = "fanout"
+
+        self.address = "%s ; %s" % (name, json.dumps(addr_opts))
 
     @property
     def receiver(self):
@@ -165,7 +176,6 @@ class QPIDDriver(base.BaseDriver):
                 LOG.info(_('Connected to AMQP server on %s'), broker)
                 break
 
-
     @property
     def session(self):
         try:
@@ -178,6 +188,7 @@ class QPIDDriver(base.BaseDriver):
         return self.session
 
     def _send(self, target, message, wait_for_reply=None, timeout=None):
+        pass
 
     def _listen(self, target):
         return self.QPIDListener(self, target)
