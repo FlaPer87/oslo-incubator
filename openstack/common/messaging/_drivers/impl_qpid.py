@@ -27,7 +27,7 @@ from openstack.common.gettextutils import _
 from openstack.common import importutils
 from openstack.common import jsonutils
 from openstack.common import log as logging
-from openstack.common.messaging.drivers import base
+from openstack.common.messaging._drivers import base
 
 qpid_messaging = importutils.try_import("qpid.messaging")
 qpid_exceptions = importutils.try_import("qpid.messaging.exceptions")
