@@ -86,4 +86,4 @@ class MemorycacheTest(utils.BaseTestCase):
         self.client.set('foo', 0)
         self.client.set('bar', 1)
         values = self.client.get_many(["foo", "bar"])
-        self.assertEquals(list(values), [0, 1])
+        self.assertEquals(list(values), [('foo', 0), ('bar', 1)])

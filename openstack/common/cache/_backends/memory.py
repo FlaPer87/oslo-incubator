@@ -13,11 +13,11 @@
 #    under the License.
 
 
-from openstack.common.cache.backends import base
+from openstack.common.cache import backends
 from openstack.common import timeutils
 
 
-class MemoryBackend(base.Cache):
+class MemoryBackend(backends.BaseCache):
 
     def __init__(self, conf, cache_prefix):
         super(MemoryBackend, self).__init__(conf, cache_prefix)

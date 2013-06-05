@@ -15,7 +15,7 @@
 import abc
 
 
-class Cache(object):
+class BaseCache(object):
 
     __metaclas__ = abc.ABCMeta
 
@@ -94,7 +94,7 @@ class Cache(object):
         """
         return self.get(key) is not None
 
-    def set_many(self, data, ttl=None):
+    def set_many(self, data, ttl=0):
         """Sets many keys in the cache
 
         :params data: A dictionary like {key: val} to store

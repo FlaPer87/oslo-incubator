@@ -14,8 +14,8 @@
 
 from oslo.config import cfg
 
-from openstack.common.cache import cache
 from openstack.common.cache._backends import memory
+from openstack.common.cache import cache
 from tests import utils
 
 
