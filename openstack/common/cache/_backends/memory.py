@@ -14,6 +14,7 @@
 
 
 from openstack.common.cache import backends
+from openstack.common import lockutils
 from openstack.common import timeutils
 
 
@@ -21,23 +22,56 @@ class MemoryBackend(backends.BaseCache):
 
     def __init__(self, conf, cache_prefix):
         super(MemoryBackend, self).__init__(conf, cache_prefix)
-        self.cache = {}
+        self._cache = {}
+        self._cache_ttl = {}
+        self.lock = lockutils.DynamicRWLock()
 
     def set(self, key, value, ttl=0):
-        timeout = 0
-        if ttl != 0:
-            timeout = timeutils.utcnow_ts() + ttl
-        self.cache[key] = (timeout, value)
-        return True
+        with self.lock.write(key):
+            timeout = 0
+            if ttl != 0:
+                timeout = timeutils.utcnow_ts() + ttl
+            self._cache[key] = (timeout, value)
+
+            if timeout:
+                self._cache_ttl.setdefault(timeout, set()).add(key)
+
+            return True
 
     def get(self, key, default=None):
-        now = timeutils.utcnow_ts()
-        for k in self.cache.keys():
-            (timeout, _value) = self.cache[k]
-            if timeout and now >= timeout:
-                del self.cache[k]
+        with self.lock.read(key):
+            now = timeutils.utcnow_ts()
 
-        return self.cache.get(key, (0, None))[1]
+            try:
+                timeout, value = self._cache[key]
+
+                if timeout and now >= timeout:
+                    del self._cache[key]
+                    return default
+
+                return value
+            except KeyError:
+                return default
 
     def unset(self, key):
-        self.cache.pop(key, None)
+        with self.lock.write(key):
+            now = timeutils.utcnow_ts()
+            for timeout in sorted(self._cache_ttl.keys()):
+
+                # NOTE(flaper87): If timeout is greater
+                # than `now`, stop the iteration, other
+                # keys are have not expired.
+                if now < timeout:
+                    break
+
+                # NOTE(flaper87): Unset every key in
+                # this set from the cache if its timeout
+                # is equal to `timeout`. (They key might
+                # have been updated)
+                for key in self._cache_ttl.pop(timeout):
+                    if self._cache[key][0] == timeout:
+                        del self._cache[key]
+
+            # NOTE(flaper87): Delete the key. Using pop
+            # since it could have been deleted already
+            self._cache.pop(key, None)

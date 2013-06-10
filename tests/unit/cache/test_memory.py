@@ -60,6 +60,29 @@ class MemorycacheTest(utils.BaseTestCase):
         finally:
             timeutils.clear_time_override()
 
+    def test_timeout_unset(self):
+        try:
+            now = datetime.datetime.utcnow()
+            timeutils.set_time_override(now)
+            self.client.set('foo', 'bar', ttl=3)
+            self.client.set('fooo', 'bar', ttl=4)
+            self.client.set('foooo', 'bar', ttl=5)
+            self.client.set('fooooo', 'bar', ttl=6)
+            timeutils.set_time_override(now + datetime.timedelta(seconds=1))
+            self.assertEqual(self.client.get('foo'), 'bar')
+            self.assertEqual(self.client.get('fooo'), 'bar')
+            self.assertEqual(self.client.get('foooo'), 'bar')
+            self.assertEqual(self.client.get('fooooo'), 'bar')
+
+            timeutils.set_time_override(now + datetime.timedelta(seconds=5))
+            self.client.unset('foo')
+            self.assertEqual(self.client.get('foo'), None)
+            self.assertEqual(self.client.get('fooo'), None)
+            self.assertEqual(self.client.get('foooo'), None)
+            self.assertEqual(self.client.get('fooooo'), 'bar')
+        finally:
+            timeutils.clear_time_override()
+
     def test_incr(self):
         self.client.set('foo', 1)
         self.assertEquals(self.client.get('foo'), 1)
