@@ -33,7 +33,6 @@ class BaseCache(object):
                        by current back-end.
         :params ttl: Key's timeout in seconds.
         """
-        return None
 
     @abc.abstractmethod
     def get(self, key, default=None):
@@ -45,7 +44,6 @@ class BaseCache(object):
         :returns: `key`'s value in the cache if it exists,
                   otherwise `default` should be returned.
         """
-        return None
 
     @abc.abstractmethod
     def unset(self, key):
@@ -55,9 +53,8 @@ class BaseCache(object):
 
         :returns: The key value if there's one
         """
-        return None
 
-    def add(self, key, value, ttl=0, min_compress_len=0):
+    def add(self, key, value, ttl=0):
         """Sets the value for a key if it doesn't exist
 
         :params key: Key to create as string.
