@@ -28,6 +28,7 @@ class MemoryBackend(backends.BaseCache):
 
     def set(self, key, value, ttl=0):
         with self.lock.write(key):
+            key = self._prefix_key(key)
             timeout = 0
             if ttl != 0:
                 timeout = timeutils.utcnow_ts() + ttl
@@ -40,6 +41,7 @@ class MemoryBackend(backends.BaseCache):
 
     def get(self, key, default=None):
         with self.lock.read(key):
+            key = self._prefix_key(key)
             now = timeutils.utcnow_ts()
 
             try:
@@ -74,4 +76,4 @@ class MemoryBackend(backends.BaseCache):
 
             # NOTE(flaper87): Delete the key. Using pop
             # since it could have been deleted already
-            self._cache.pop(key, None)
+            self._cache.pop(self._prefix_key(key), None)

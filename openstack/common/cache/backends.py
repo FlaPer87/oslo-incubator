@@ -21,7 +21,7 @@ class BaseCache(object):
 
     def __init__(self, conf, cache_prefix):
         self.conf = conf
-        self.cache_prefix = cache_prefix
+        self._cache_prefix = cache_prefix
 
     @abc.abstractmethod
     def set(self, key, value, ttl=0):
@@ -53,6 +53,22 @@ class BaseCache(object):
 
         :returns: The key value if there's one
         """
+
+    def _prefix_key(self, key):
+        """Prepares the key
+
+        This method concatenates the cache_prefix
+        and the key so it can be used in the cache.
+
+        NOTE: All cache backends have to call it
+        explicitly where needed.
+
+        :param key: The key to be prefixed
+        """
+        if self._cache_prefix:
+            return ("%(prefix)s-%(key)s" %
+                    {'prefix': self._cache_prefix, 'key': key})
+        return key
 
     def add(self, key, value, ttl=0):
         """Sets the value for a key if it doesn't exist
