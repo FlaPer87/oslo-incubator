@@ -70,9 +70,9 @@ class MemoryBackend(backends.BaseCache):
                 # this set from the cache if its timeout
                 # is equal to `timeout`. (They key might
                 # have been updated)
-                for key in self._cache_ttl.pop(timeout):
-                    if self._cache[key][0] == timeout:
-                        del self._cache[key]
+                for subkey in self._cache_ttl.pop(timeout):
+                    if self._cache[subkey][0] == timeout:
+                        del self._cache[subkey]
 
             # NOTE(flaper87): Delete the key. Using pop
             # since it could have been deleted already
