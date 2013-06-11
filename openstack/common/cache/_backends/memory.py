@@ -24,23 +24,22 @@ class MemoryBackend(backends.BaseCache):
         super(MemoryBackend, self).__init__(conf, cache_prefix)
         self._cache = {}
         self._cache_ttl = {}
-        self.lock = lockutils.DynamicRWLock()
+        self._lock = lockutils.DynamicRWLock()
 
     def set(self, key, value, ttl=0):
-        with self.lock.write(key):
+        with self._lock.write(key):
             key = self._prefix_key(key)
-            timeout = 0
             if ttl != 0:
-                timeout = timeutils.utcnow_ts() + ttl
-            self._cache[key] = (timeout, value)
+                ttl = timeutils.utcnow_ts() + ttl
+            self._cache[key] = (ttl, value)
 
-            if timeout:
-                self._cache_ttl.setdefault(timeout, set()).add(key)
+            if ttl:
+                self._cache_ttl.setdefault(ttl, set()).add(key)
 
             return True
 
     def get(self, key, default=None):
-        with self.lock.read(key):
+        with self._lock.read(key):
             key = self._prefix_key(key)
             now = timeutils.utcnow_ts()
 
@@ -56,7 +55,7 @@ class MemoryBackend(backends.BaseCache):
                 return default
 
     def unset(self, key):
-        with self.lock.write(key):
+        with self._lock.write(key):
             now = timeutils.utcnow_ts()
             for timeout in sorted(self._cache_ttl.keys()):
 
