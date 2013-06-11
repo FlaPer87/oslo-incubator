@@ -25,8 +25,7 @@ from stevedore import driver
 _cache_options = [
     cfg.StrOpt('cache_backend',
                default='memory',
-               help='The cache driver to use, defaults to memory. Other '
-                    'drivers include redis and memcached.'),
+               help='The cache driver to use, default value is `memory`.'),
     cfg.StrOpt('cache_prefix',
                default=None,
                help='Prefix to use in every cache key'),
@@ -34,6 +33,13 @@ _cache_options = [
 
 
 def get_cache(conf):
+    """Loads the cache back-end
+
+    This function loads the cache back-end
+    specified in the given configuration.
+
+    :param conf: Configuration instance to use
+    """
     conf.register_opts(_cache_options)
 
     cache_backend = conf.cache_backend
