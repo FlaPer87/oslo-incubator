@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Multiple Cache API backend support.
+"""Cache library.
 
 Supported configuration options:
 
